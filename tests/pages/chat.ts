@@ -35,6 +35,27 @@ export class ChatPage {
 
   async createNewChat() {
     await this.page.goto("/");
+    // Wait for the chat interface to be ready (model-selector indicates chat is loaded)
+    // The proxy middleware creates a guest session, but we need to wait for it
+    await this.page.waitForLoadState("networkidle");
+
+    // Wait for model-selector to be visible (indicates chat interface is loaded)
+    // If it's not visible after a short wait, reload and try again
+    let retries = 0;
+    const maxRetries = 3;
+
+    while (retries < maxRetries) {
+      try {
+        await this.page.getByTestId("model-selector").waitFor({ state: "visible", timeout: 5000 });
+        break;
+      } catch {
+        retries++;
+        if (retries < maxRetries) {
+          await this.page.reload();
+          await this.page.waitForLoadState("networkidle");
+        }
+      }
+    }
   }
 
   getCurrentURL(): string {
@@ -47,12 +68,27 @@ export class ChatPage {
     await this.sendButton.click();
   }
 
-  async isGenerationComplete() {
-    const response = await this.page.waitForResponse((currentResponse) =>
-      currentResponse.url().includes("/api/chat")
+  async isGenerationComplete(timeout = 30000) {
+    const response = await this.page.waitForResponse(
+      (currentResponse) => currentResponse.url().includes("/api/chat"),
+      { timeout }
     );
 
     await response.finished();
+  }
+
+  /**
+   * Start waiting for the chat response before the action that triggers it.
+   * Usage:
+   *   const waitPromise = chatPage.startWaitingForResponse();
+   *   await someAction();
+   *   await waitPromise;
+   */
+  startWaitingForResponse(timeout = 30000) {
+    return this.page.waitForResponse(
+      (currentResponse) => currentResponse.url().includes("/api/chat"),
+      { timeout }
+    ).then(response => response.finished());
   }
 
   async isVoteComplete() {

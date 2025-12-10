@@ -16,7 +16,10 @@ export type Surface =
   | "vote"
   | "document"
   | "suggestions"
-  | "activate_gateway";
+  | "activate_gateway"
+  | "api_key"
+  | "template"
+  | "prompt";
 
 export type ErrorCode = `${ErrorType}:${Surface}`;
 
@@ -33,6 +36,9 @@ export const visibilityBySurface: Record<Surface, ErrorVisibility> = {
   document: "response",
   suggestions: "response",
   activate_gateway: "response",
+  api_key: "response",
+  template: "response",
+  prompt: "response",
 };
 
 export class ChatSDKError extends Error {
@@ -99,7 +105,7 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
     case "forbidden:chat":
       return "This chat belongs to another user. Please check the chat ID and try again.";
     case "unauthorized:chat":
-      return "You need to sign in to view this chat. Please sign in and try again.";
+      return "You must be logged in to use the chat. Please sign in and try again.";
     case "offline:chat":
       return "We're having trouble sending your message. Please check your internet connection and try again.";
 
@@ -111,6 +117,30 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
       return "You need to sign in to view this document. Please sign in and try again.";
     case "bad_request:document":
       return "The request to create or update the document was invalid. Please check your input and try again.";
+
+    // API Key errors
+    case "bad_request:api_key":
+      return "The API key is invalid or could not be validated. Please check your key and try again.";
+    case "not_found:api_key":
+      return "No API key found for the selected provider. Please add your API key in settings.";
+    case "unauthorized:api_key":
+      return "You must be logged in to manage API keys.";
+
+    // Template errors
+    case "bad_request:template":
+      return "The template request was invalid. Please check your input and try again.";
+    case "not_found:template":
+      return "The requested template was not found.";
+    case "unauthorized:template":
+      return "You must be logged in to manage templates.";
+
+    // System Prompt errors
+    case "bad_request:prompt":
+      return "The system prompt request was invalid. Please check your input and try again.";
+    case "not_found:prompt":
+      return "The requested system prompt was not found.";
+    case "unauthorized:prompt":
+      return "You must be logged in to manage system prompts.";
 
     default:
       return "Something went wrong. Please try again later.";

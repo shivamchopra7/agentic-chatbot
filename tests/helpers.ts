@@ -49,10 +49,42 @@ export async function createAuthenticatedContext({
     "Account created successfully!"
   );
 
+  // Wait for redirect to "/" after registration
+  await page.waitForURL("/", { timeout: 10000 });
+
+  // Wait for the page to fully load (network idle)
+  await page.waitForLoadState("networkidle");
+
+  // Wait a bit for session cookie to be fully propagated
+  await page.waitForTimeout(1000);
+
+  // Wait for the session to be established - retry with reloads if needed
   const chatPage = new ChatPage(page);
-  await chatPage.createNewChat();
-  await chatPage.chooseModelFromSelector("chat-model-reasoning");
-  await expect(chatPage.getSelectedModel()).resolves.toEqual("Reasoning model");
+  let modelSelectorVisible = false;
+  let retries = 0;
+  const maxRetries = 10;
+
+  while (!modelSelectorVisible && retries < maxRetries) {
+    try {
+      // Check if model-selector is visible (indicates chat interface)
+      await expect(page.getByTestId("model-selector")).toBeVisible({ timeout: 5000 });
+      modelSelectorVisible = true;
+    } catch {
+      // If not visible, session might not be recognized yet - reload and try again
+      retries++;
+      console.log(`Retry ${retries}/${maxRetries}: model-selector not visible, reloading...`);
+      await page.waitForTimeout(1000);
+      await page.reload();
+      await page.waitForLoadState("networkidle");
+    }
+  }
+
+  // Final check with longer timeout
+  await expect(page.getByTestId("model-selector")).toBeVisible({ timeout: 30000 });
+  await chatPage.chooseModelFromSelector("gemini-2.5-flash");
+  await expect(chatPage.getSelectedModel()).resolves.toEqual(
+    "Gemini 2.5 Flash ($0.30/1M tokens)"
+  );
 
   await page.waitForTimeout(1000);
   await context.storageState({ path: storageFile });

@@ -120,6 +120,21 @@ export function Chat({
     },
     onError: (error) => {
       if (error instanceof ChatSDKError) {
+        // Check if it's an unauthorized error - redirect to login
+        if (
+          (error as ChatSDKError).type === "unauthorized" ||
+          error.message?.includes("must be logged in")
+        ) {
+          toast({
+            type: "error",
+            description: error.message,
+          });
+          // Redirect to login after a brief delay to show the toast
+          setTimeout(() => {
+            router.push("/login");
+          }, 1500);
+          return;
+        }
         // Check if it's a credit card error
         if (
           error.message?.includes("AI Gateway requires a valid credit card")

@@ -13,7 +13,14 @@ export async function proxy(request: NextRequest) {
     return new Response("pong", { status: 200 });
   }
 
+  // Let auth routes pass through
   if (pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
+
+  // Let API routes handle their own authentication (return 401 instead of redirect)
+  // This allows API clients to receive proper error responses
+  if (pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
 

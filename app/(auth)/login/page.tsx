@@ -39,8 +39,11 @@ export default function Page() {
       });
     } else if (state.status === "success") {
       setIsSuccessful(true);
-      updateSession();
-      router.refresh();
+      // Wait for session to be updated before navigating
+      updateSession().then(() => {
+        router.push("/");
+        router.refresh();
+      });
     }
   }, [state.status]);
 

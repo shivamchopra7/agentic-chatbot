@@ -1,9 +1,39 @@
+import { expect as baseExpect, test as baseTest } from "@playwright/test";
 import { getMessageByErrorCode } from "@/lib/errors";
 import { generateUUID } from "@/lib/utils";
 import { expect, test } from "../fixtures";
 import { TEST_PROMPTS } from "../prompts/routes";
 
 const chatIdsCreatedByAda: string[] = [];
+
+// Test for unauthenticated access (uses base test without authenticated fixtures)
+baseTest.describe("/api/chat - unauthenticated", () => {
+  baseTest(
+    "Unauthenticated user cannot invoke chat generation",
+    async ({ request }) => {
+      const chatId = generateUUID();
+
+      const response = await request.post("http://localhost:3000/api/chat", {
+        data: {
+          id: chatId,
+          message: {
+            id: generateUUID(),
+            role: "user",
+            parts: [{ type: "text", text: "Hello" }],
+          },
+          selectedChatModel: "gemini-2.5-flash",
+          selectedVisibilityType: "private",
+        },
+      });
+
+      baseExpect(response.status()).toBe(401);
+
+      const { code, message } = await response.json();
+      baseExpect(code).toEqual("unauthorized:chat");
+      baseExpect(message).toEqual(getMessageByErrorCode("unauthorized:chat"));
+    }
+  );
+});
 
 // Helper function to normalize stream data for comparison
 function normalizeStreamData(lines: string[]): string[] {
@@ -46,7 +76,7 @@ test.describe
         data: {
           id: chatId,
           message: TEST_PROMPTS.SKY.MESSAGE,
-          selectedChatModel: "chat-model",
+          selectedChatModel: "gemini-2.5-flash",
           selectedVisibilityType: "private",
         },
       });
@@ -75,7 +105,7 @@ test.describe
         data: {
           id: chatId,
           message: TEST_PROMPTS.GRASS.MESSAGE,
-          selectedChatModel: "chat-model",
+          selectedChatModel: "gemini-2.5-flash",
           selectedVisibilityType: "private",
         },
       });
@@ -138,7 +168,7 @@ test.describe
             ],
             createdAt: new Date().toISOString(),
           },
-          selectedChatModel: "chat-model",
+          selectedChatModel: "gemini-2.5-flash",
           selectedVisibilityType: "private",
         },
       });
@@ -192,7 +222,7 @@ test.describe
             ],
             createdAt: new Date().toISOString(),
           },
-          selectedChatModel: "chat-model",
+          selectedChatModel: "gemini-2.5-flash",
           selectedVisibilityType: "private",
         },
       });
@@ -242,7 +272,7 @@ test.describe
             ],
             createdAt: new Date().toISOString(),
           },
-          selectedChatModel: "chat-model",
+          selectedChatModel: "gemini-2.5-flash",
           selectedVisibilityType: "private",
         },
       });
@@ -285,7 +315,7 @@ test.describe
             ],
             createdAt: new Date().toISOString(),
           },
-          selectedChatModel: "chat-model",
+          selectedChatModel: "gemini-2.5-flash",
           selectedVisibilityType: "private",
         },
       });
@@ -332,7 +362,7 @@ test.describe
             ],
             createdAt: new Date().toISOString(),
           },
-          selectedChatModel: "chat-model",
+          selectedChatModel: "gemini-2.5-flash",
           selectedVisibilityType: "public",
         },
       });

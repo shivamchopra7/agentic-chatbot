@@ -118,7 +118,29 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarContent>
           <SidebarHistory user={user} />
         </SidebarContent>
-        <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
+        <SidebarFooter>
+          {user && (
+            <div className="mb-2 flex flex-col gap-1 px-2">
+              <Link
+                href="/compare"
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+                onClick={() => setOpenMobile(false)}
+              >
+                <span className="text-lg">⚖️</span>
+                <span>Compare Models</span>
+              </Link>
+              <Link
+                href="/settings"
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+                onClick={() => setOpenMobile(false)}
+              >
+                <span className="text-lg">⚙️</span>
+                <span>Settings</span>
+              </Link>
+            </div>
+          )}
+          {user && <SidebarUserNav user={user} />}
+        </SidebarFooter>
       </Sidebar>
 
       <AlertDialog
