@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import {
-  getKnowledgeBaseById,
   addDocument,
-  getDocumentsForKnowledgeBase,
   deleteDocument,
+  getDocumentsForKnowledgeBase,
+  getKnowledgeBaseById,
 } from "@/lib/db/queries/knowledge-base";
 import { ChatSDKError } from "@/lib/errors";
 
@@ -15,7 +15,7 @@ const addDocumentSchema = z.object({
 });
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -123,7 +123,13 @@ export async function DELETE(
       );
     }
 
-    await deleteDocument(documentId);
+    const deleted = await deleteDocument(documentId, id);
+    if (!deleted) {
+      return NextResponse.json(
+        { error: "Document not found" },
+        { status: 404 }
+      );
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Delete document error:", error);
@@ -133,4 +139,3 @@ export async function DELETE(
     );
   }
 }
-

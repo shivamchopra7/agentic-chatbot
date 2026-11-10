@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import {
-  getWorkspaceMembers,
   addWorkspaceMember,
-  updateMemberRole,
-  removeWorkspaceMember,
   getMemberRole,
+  getWorkspaceMembers,
+  removeWorkspaceMember,
+  updateMemberRole,
 } from "@/lib/db/queries/workspaces";
 import { ChatSDKError } from "@/lib/errors";
 
@@ -21,7 +21,7 @@ const updateMemberSchema = z.object({
 });
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -64,10 +64,7 @@ export async function POST(
     // Only owner or admin can add members
     const role = await getMemberRole(id, session.user.id);
     if (!role || !["owner", "admin"].includes(role)) {
-      return NextResponse.json(
-        { error: "Permission denied" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -80,7 +77,11 @@ export async function POST(
       );
     }
 
-    const member = await addWorkspaceMember(id, parsed.data.userId, parsed.data.role);
+    const member = await addWorkspaceMember(
+      id,
+      parsed.data.userId,
+      parsed.data.role
+    );
     return NextResponse.json({ member }, { status: 201 });
   } catch (error) {
     console.error("Add member error:", error);
@@ -106,10 +107,7 @@ export async function PATCH(
     // Only owner or admin can update roles
     const role = await getMemberRole(id, session.user.id);
     if (!role || !["owner", "admin"].includes(role)) {
-      return NextResponse.json(
-        { error: "Permission denied" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -122,7 +120,20 @@ export async function PATCH(
       );
     }
 
-    const member = await updateMemberRole(id, parsed.data.userId, parsed.data.role);
+    // Prevent modifying the workspace owner's role
+    const targetRole = await getMemberRole(id, parsed.data.userId);
+    if (targetRole === "owner") {
+      return NextResponse.json(
+        { error: "Cannot change the workspace owner's role" },
+        { status: 403 }
+      );
+    }
+
+    const member = await updateMemberRole(
+      id,
+      parsed.data.userId,
+      parsed.data.role
+    );
     return NextResponse.json({ member });
   } catch (error) {
     console.error("Update member error:", error);
@@ -157,8 +168,14 @@ export async function DELETE(
     // Only owner or admin can remove members
     const role = await getMemberRole(id, session.user.id);
     if (!role || !["owner", "admin"].includes(role)) {
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    }
+
+    // Prevent removing the workspace owner
+    const targetRole = await getMemberRole(id, userId);
+    if (targetRole === "owner") {
       return NextResponse.json(
-        { error: "Permission denied" },
+        { error: "Cannot remove the workspace owner" },
         { status: 403 }
       );
     }
@@ -173,4 +190,3 @@ export async function DELETE(
     );
   }
 }
-

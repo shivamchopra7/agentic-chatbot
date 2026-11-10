@@ -1,13 +1,13 @@
 "use server";
 
-import { and, eq, desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
-  knowledgeBase,
-  knowledgeDocument,
   type KnowledgeBase,
   type KnowledgeDocument,
+  knowledgeBase,
+  knowledgeDocument,
 } from "../schema";
 
 // biome-ignore lint: Forbidden non-null assertion.
@@ -30,9 +30,7 @@ export async function createKnowledgeBase(
   return kb;
 }
 
-export async function getKnowledgeBasesForUser(
-  userId: string
-): Promise<KnowledgeBase[]> {
+export function getKnowledgeBasesForUser(userId: string) {
   return db
     .select()
     .from(knowledgeBase)
@@ -78,9 +76,7 @@ export async function addDocument(
   return doc;
 }
 
-export async function getDocumentsForKnowledgeBase(
-  knowledgeBaseId: string
-): Promise<KnowledgeDocument[]> {
+export function getDocumentsForKnowledgeBase(knowledgeBaseId: string) {
   return db
     .select()
     .from(knowledgeDocument)
@@ -99,10 +95,18 @@ export async function getDocumentById(
   return doc ?? null;
 }
 
-export async function deleteDocument(id: string): Promise<boolean> {
+export async function deleteDocument(
+  id: string,
+  knowledgeBaseId: string
+): Promise<boolean> {
   const result = await db
     .delete(knowledgeDocument)
-    .where(eq(knowledgeDocument.id, id))
+    .where(
+      and(
+        eq(knowledgeDocument.id, id),
+        eq(knowledgeDocument.knowledgeBaseId, knowledgeBaseId)
+      )
+    )
     .returning();
   return result.length > 0;
 }
@@ -111,11 +115,10 @@ export async function deleteDocument(id: string): Promise<boolean> {
  * Simple text search in knowledge base documents
  * For production, use vector embeddings with pgvector
  */
-export async function searchDocuments(
+export function searchDocuments(
   knowledgeBaseId: string,
   _query: string
 ): Promise<KnowledgeDocument[]> {
   // For now, return all documents - in production use vector similarity
   return getDocumentsForKnowledgeBase(knowledgeBaseId);
 }
-

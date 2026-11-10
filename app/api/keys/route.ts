@@ -53,7 +53,10 @@ export async function GET() {
     if (error instanceof ChatSDKError) {
       return error.toResponse();
     }
-    return NextResponse.json({ error: "Failed to fetch API keys" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch API keys" },
+      { status: 500 }
+    );
   }
 }
 
@@ -75,7 +78,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { apiKey: rawApiKey, label, provider: specifiedProvider } = parsed.data;
+    const {
+      apiKey: rawApiKey,
+      label,
+      provider: specifiedProvider,
+    } = parsed.data;
 
     // Detect or use specified provider
     const provider = specifiedProvider || detectProvider(rawApiKey);
@@ -117,7 +124,10 @@ export async function POST(request: Request) {
     if (error instanceof ChatSDKError) {
       return error.toResponse();
     }
-    return NextResponse.json({ error: "Failed to create API key" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create API key" },
+      { status: 500 }
+    );
   }
 }
 
@@ -162,6 +172,10 @@ export async function PATCH(request: Request) {
       rawApiKey,
     });
 
+    if (!updated) {
+      return NextResponse.json({ error: "API key not found" }, { status: 404 });
+    }
+
     return NextResponse.json({
       key: {
         id: updated.id,
@@ -175,7 +189,10 @@ export async function PATCH(request: Request) {
     if (error instanceof ChatSDKError) {
       return error.toResponse();
     }
-    return NextResponse.json({ error: "Failed to update API key" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update API key" },
+      { status: 500 }
+    );
   }
 }
 
@@ -204,7 +221,9 @@ export async function DELETE(request: Request) {
     if (error instanceof ChatSDKError) {
       return error.toResponse();
     }
-    return NextResponse.json({ error: "Failed to delete API key" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete API key" },
+      { status: 500 }
+    );
   }
 }
-

@@ -46,7 +46,9 @@ export class ChatPage {
 
     while (retries < maxRetries) {
       try {
-        await this.page.getByTestId("model-selector").waitFor({ state: "visible", timeout: 5000 });
+        await this.page
+          .getByTestId("model-selector")
+          .waitFor({ state: "visible", timeout: 5000 });
         break;
       } catch {
         retries++;
@@ -68,7 +70,7 @@ export class ChatPage {
     await this.sendButton.click();
   }
 
-  async isGenerationComplete(timeout = 30000) {
+  async isGenerationComplete(timeout = 30_000) {
     const response = await this.page.waitForResponse(
       (currentResponse) => currentResponse.url().includes("/api/chat"),
       { timeout }
@@ -84,11 +86,13 @@ export class ChatPage {
    *   await someAction();
    *   await waitPromise;
    */
-  startWaitingForResponse(timeout = 30000) {
-    return this.page.waitForResponse(
-      (currentResponse) => currentResponse.url().includes("/api/chat"),
-      { timeout }
-    ).then(response => response.finished());
+  startWaitingForResponse(timeout = 30_000) {
+    return this.page
+      .waitForResponse(
+        (currentResponse) => currentResponse.url().includes("/api/chat"),
+        { timeout }
+      )
+      .then((response) => response.finished());
   }
 
   async isVoteComplete() {
@@ -178,7 +182,7 @@ export class ChatPage {
     const lastMessageElement = messageElements.at(-1);
 
     if (!lastMessageElement) {
-      return null;
+      throw new Error("No assistant message found");
     }
 
     const content = await lastMessageElement
